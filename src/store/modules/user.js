@@ -28,33 +28,39 @@ const mutations = {
 }
 
 const actions = {
-  // user login
-  login({ commit }, userInfo) {
+  /**
+   * 用户登录
+   * @param {*} commit 
+   * @param {string} userInfo 
+   * @returns 
+   */
+  async login({ commit }, userInfo) {
     const { username, password } = userInfo
-    return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
-        const { data } = response
-        commit('SET_TOKEN', data.token)
-        setToken(data.token)
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
-    })
+    const result = await login({ username: username.trim(), password: password.trim() })
+    if (result.code == 20000) {
+      commit('SET_TOKEN', result.data.token)
+      setToken(result.data.token)
+      return 'ok'
+    } else {
+      return new Promise.reject(new Error("fail"))
+    }
   },
 
-  // get user info
+  /**
+   * 获取用户信息
+   */
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
+      // 这里的getInfo是api/user里的getInfo，向后端发送请求，获取用户数据
       getInfo(state.token).then(response => {
         const { data } = response
-
+        // 返回值中没有数据则返回错误信息
         if (!data) {
           return reject('Verification failed, please Login again.')
         }
 
         const { name, avatar } = data
-
+        // 从返回数据中解构出name和avatar，并保存在vuex中
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         resolve(data)
@@ -64,7 +70,10 @@ const actions = {
     })
   },
 
-  // user logout
+  /**
+   * 
+   *用户登出
+   */
   logout({ commit, state }) {
     return new Promise((resolve, reject) => {
       logout(state.token).then(() => {
